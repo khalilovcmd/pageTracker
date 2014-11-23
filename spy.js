@@ -140,7 +140,7 @@ function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, coo
                 '200102', //VID
                 ['input', 'a'], //elements
                 ['mousedown', 'click'], //events
-                'http://wap.mozook.com/visitstattracker/tracker.aspx?vid=', //tracking url (original url)
+                'URL?vid=', //tracking url (original url)
                 {
                     visitType: 'visitType',
                     loadTime: 'loadTime',
