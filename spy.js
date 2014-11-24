@@ -1,4 +1,4 @@
-function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, cookieParams) {
+function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, cookieParams) {
 
     var a = '&';
 
@@ -16,7 +16,7 @@ function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, coo
         },
         // function: to make ajax requests
         getAdvTimeParams = function (timeValue) {
-            var result = url + vid;
+            var result = urls.time + vid;
 
             if ('loadTime' in timeParams)
                 result += a + timeParams.loadTime + '=' + timeValue.loadTime;
@@ -29,22 +29,10 @@ function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, coo
         },
         // function: to make ajax requests
         getBasicTimeParams = function (timeValue) {
-            var result = url + vid;
+            var result = urls.time + vid;
 
             if ('loadTime' in timeParams)
                 result += a + timeParams.loadTime + '=' + new Date() - loadTime;
-
-            return result;
-        },
-        // function: to make ajax requests
-        getTrackingParams = function (trackingValue) {
-            var result = url + vid;
-
-            if ('event' in trackParams)
-                result += a + 'event=' + timeParams.event;
-
-            if ('element' in trackParams)
-                result += a + 'element=' + timeParams.element;
 
             return result;
         };
@@ -83,8 +71,10 @@ function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, coo
 
                 ajax(url);
             } else {
-                ajax(getBasicTimeParams());
             }
+            
+                            ajax(getBasicTimeParams());
+
         },
 
         // tracking if cookie is enabled
@@ -95,7 +85,7 @@ function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, coo
                 cookieEnabled = (navigator.cookieEnabled) ? true : false;
 
             //if not IE4+ nor NS6+
-            if (typeof navigator.cookieEnabled == "undefined" && !cookieEnabled) {
+            if (typeof navigator.cookieEnabled == "undefined") {
                 document.cookie = "c";
                 cookieEnabled = (document.cookie.indexOf("c") != -1) ? true : false;
             }
@@ -117,7 +107,7 @@ function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, coo
                 }
             }
 
-            var result = url + vid +
+            var result = urls.cookies + vid +
                 a + cookieParams.cookieEnabled + '=' + cookieEnabled +
                 a + cookieParams.cookieVid + '=' + cookieValue;
 
@@ -140,7 +130,10 @@ function Tracker(loadTime, vid, elems, events, url, timeParams, trackParams, coo
                 '200102', //VID
                 ['input', 'a'], //elements
                 ['mousedown', 'click'], //events
-                'http://wap.mozook.com/visitstattracker/tracker.aspx?vid=', //tracking url (original url)
+                { 
+                    time : 'http://wap.mozook.com/visitstattracker/timetracker.aspx?vid=',
+                    cookies: 'http://wap.mozook.com/visitstattracker/cookietracker.aspx?vid='
+                }, 
                 {
                     visitType: 'visitType',
                     loadTime: 'loadTime',
