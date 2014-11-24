@@ -1,7 +1,8 @@
+function Tracker(timeTrack, elementTrack, cookieTrack, extraTrack) {
 
-function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, cookieParams) {
-
-    var a = '&';
+    var q = '?',
+        a = '&',
+        e = '=';
 
     // function: to loop through any elements
     var each = function (elements, callback) {
@@ -9,112 +10,184 @@ function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, co
                 callback(elements[i]);
         },
         // function: to make ajax requests
-        ajax = function (surl) {
-            var xhr = !!window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-            xhr.open('GET', surl);
-            xhr.setRequestHeader("Content-Type", "text/plain");
-            xhr.send(null);
+        ajax = function (url) {
+
+            try {
+                var xhr = !!window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+                xhr.open('GET', url);
+                xhr.setRequestHeader("Content-Type", "text/plain");
+                xhr.send(null);
+            } catch (e) {
+                throw e;
+            }
         },
-        // function: to make ajax requests
-        getAdvTimeParams = function (timeValue) {
-            var result = urls.time + vid;
+        // function: to parse & get a cookie value
+        getCookieValue = function (name) {
 
-            if ('loadTime' in timeParams)
-                result += a + timeParams.loadTime + '=' + timeValue.loadTime;
-            if ('navigationTime' in timeParams)
-                result += a + timeParams.navigationTime + '=' + timeValue.navigationTime;
-            if ('fetchTime' in timeParams)
-                result += a + timeParams.fetchTime + '=' + timeValue.fetchTime;
+            // get cookie value
+            var cookie = document.cookie.split(';'),
+                cookieValue;
 
-            return result;
+            for (var i = 0; i < cookie.length; i++) {
+                var c = cookie[i];
+
+                while (c.charAt(0) == ' ')
+                    c = c.substring(1, c.length);
+
+                if (c.indexOf(name) == 0)
+                    cookieValue = c.substring(name.length, c.length);
+            }
+
+            return cookieValue;
         },
-        // function: to make ajax requests
-        getBasicTimeParams = function (timeValue) {
-            var result = urls.time + vid;
+        getExtraParams = function () {
+            var url = '';
 
-            if ('loadTime' in timeParams)
-                result += a + timeParams.loadTime + '=' + (new Date() - loadTime);
+            if (extraTrack && extraTrack.length > 0) {
 
-            return result;
+                // loop through (params, values) in "extraTrack" object
+                for (var i = 0; i < extraTrack.length; i++) {
+
+                    // adding all params,values to the url
+                    if (i == extraTrack.length - 1)
+                        url += extraTrack[i].param + e + extraTrack[i].value;
+                    else
+                        url += extraTrack[i].param + e + extraTrack[i].value + a;
+                }
+            }
+
+            return url;
         };
 
 
     return {
 
-        // function: tracking all events specified by the user
+        // 1. go through all elements provided by user
+        // 2. get all elements by tag
+        // 3. get all events
+        // 4. check if event exists in element
+        // 5. add event handler to the element
+        // 6. when event occurs, fire an ajax call to a url
         eventTrack: function () {
-            each(elems, function (tagElement) {
-                each(document.getElementsByTagName(tagElement), function (element) {
-                    each(events, function (event) {
-                        // adding event listeners
-                        element.addEventListener(event, function () {
-                            // sending ajax request
-                            ajax();
-                        });
+
+            if (elementTrack) {
+
+                var elems = elementTrack.elements,
+                    events = elementTrack.events;
+
+                if (elems.length > 0 && elementTrack.events.length > 0) {
+                    each(elems, function (tagElement) {
+                        each(document.getElementsByTagName(tagElement), function (element) {
+                            each(events, function (event) {
+                                element.addEventListener(event, function () {
+                                    var url = elementTrack.url + q +
+                                        elementTrack.elementParam + e + element.tagName + a +
+                                        elementTrack.eventParam + e + event;
+                                    ajax(url + a + getExtraParams());
+                                });
+                            });
+                        })
                     });
-                })
-            });
-        },
-
-        // function: tracking time taken to load based on performance api
-        timeTrack: function () {
-
-            if (window.performance && window.performance.timing) {
-                var t = window.performance.timing,
-                    ldt = t.loadEventEnd - t.responseEnd,
-                    ft = t.responseEnd - t.fetchStart,
-                    nt = t.loadEventEnd - t.navigationStart,
-                    url = getAdvTimeParams({
-                        loadTime: ldt,
-                        navigationTime: nt,
-                        fetchTime: ft
-                    });
-
-                ajax(url);
-            } else {
-                ajax(getBasicTimeParams());
-            }
-        },
-
-        // tracking if cookie is enabled
-        cookieTrack: function () {
-
-            var cookieValue = '',
-                cookieVid = document.cookie,
-                cookieEnabled = (navigator.cookieEnabled) ? true : false;
-
-            //if not IE4+ nor NS6+
-            if (typeof navigator.cookieEnabled == "undefined") {
-                document.cookie = "c";
-                cookieEnabled = (document.cookie.indexOf("c") != -1) ? true : false;
-                document.cookie = cookieVid;
-            }
-
-            if (cookieEnabled) {
-
-                // finding the cookie with the name 'WS_VID'
-                var nameEQ = 'WS_VID=';
-                var ca = cookieVid.split(';');
-
-                for (var i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-
-                    while (c.charAt(0) == ' ')
-                        c = c.substring(1, c.length);
-
-                    if (c.indexOf(nameEQ) == 0)
-                        cookieValue = c.substring(nameEQ.length, c.length);
                 }
             }
+        },
 
-            var result = urls.cookies + vid +
-                a + cookieParams.cookieEnabled + '=' + cookieEnabled +
-                a + cookieParams.cookieVid + '=' + cookieValue;
+        // 1. check on window.performance.timing api existence
+        // 2. if exists, get loadTime, fetchTime and navigationTime
+        // 3. if doesn't, get loadTime only
+        // 4. fire an ajax call
+        timeTrack: function () {
 
-            ajax(result);
+            if (timeTrack && timeTrack.init) {
+                if (window.performance && window.performance.timing) {
+                    var url,
+                        t = window.performance.timing,
+                        ldt = t.loadEventEnd - t.responseEnd,
+                        ft = t.responseEnd - t.fetchStart,
+                        nt = t.loadEventEnd - t.navigationStart;
+
+                    url = timeTrack.url + q;
+
+                    if (timeTrack.loadTimeParam)
+                        url += timeTrack.loadTimeParam + e + ldt + a;
+
+                    if (timeTrack.fetchTimeParam)
+                        url += timeTrack.fetchTimeParam + e + ft + a;
+
+                    if (timeTrack.navigationTimeParam)
+                        url += timeTrack.navigationTimeParam + e + nt;
+
+                    ajax(url + a + getExtraParams());
+                } else {
+                    ajax(url + q + timeTrack.fetchTimeParam + e + (new Date() - timeTrack.init) + a + getExtraParams());
+                }
+            }
+        },
+
+        // 1. check if the cookie feature is enabled (navigator.cookieEnabled)
+        // 2. if cookie enabled, then go through all cookie keys and retrieve values
+        // 3. fire an ajax call
+        cookieTrack: function () {
+
+            if (cookieTrack && cookieTrack.url) {
+
+                var url, cookies, cookieEnabled;
+
+                cookieEnabled = (navigator.cookieEnabled) ? true : false;
+
+                //if not IE4+ nor NS6+
+                if (typeof navigator.cookieEnabled == "undefined") {
+                    document.cookie = "c";
+                    cookieEnabled = (document.cookie.indexOf("c") != -1) ? true : false;
+                }
+
+                if (cookieEnabled && cookieTrack.cookieEnabledParam) {
+
+                    url = cookieTrack.url + q + cookieTrack.cookieEnabledParam + e + cookieEnabled + a;
+
+                    for (var i = 0; i < cookieTrack.cookies.length; i++) {
+                        var cookieValue = getCookieValue(cookieTrack.cookies[i]);
+
+                        if (cookieValue)
+                            url += cookieTrack.cookies[i] + cookieValue + a;
+                    }
+                }
+
+                ajax(url + getExtraParams());
+            }
         }
     };
 }
+
+
+var timeTrack = {
+    init: new Date(),
+    loadTimeParam: 'loadTime',
+    navigationTimeParam: 'navigationTime',
+    fetchTimeParam: 'fetchTime',
+    url: 'http://www.mobitrans.net'
+};
+
+var elementTrack = {
+    eventParam: 'event',
+    elementParam: 'element',
+    elements: ['a', 'input', 'button'],
+    events: ['mouseover'],
+    url: 'http://www.mobitrans.net'
+};
+
+var cookieTrack = {
+    cookieEnabledParam: 'cookieEnabled',
+    cookies: ['ws_vid', 'mycookie', 'anothercookie'],
+    url: 'http://www.mobitrans.net'
+};
+
+var extraTrack = [
+    {
+        param: 'vid',
+        value: '201312'
+    }
+    ];
 
 (function () {
 
@@ -125,30 +198,10 @@ function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, co
 
     function initTracking() {
         setTimeout(function () {
-            var trk = new Tracker(
-                100, //loadtime
-                '200102', //VID
-                ['input', 'a'], //elements
-                ['mousedown', 'click'], //events
-                {
-                    time: 'http://wap.mozook.com/visitstattracker/timetracker.aspx?vid=',
-                    cookies: 'http://wap.mozook.com/visitstattracker/cookietracker.aspx?vid='
-                }, {
-                    visitType: 'visitType',
-                    loadTime: 'loadTime',
-                    navigationTime: 'navigationTime',
-                    fetchTime: 'fetchTime'
-                }, {
-                    event: 'ev',
-                    elem: 'element'
-                }, {
-                    cookieEnabled: 'ckExist',
-                    cookieVid: 'ckVid'
-                }
-            );
+            var trk = new Tracker(timeTrack, elementTrack, cookieTrack, extraTrack);
 
-            trk.timeTrack();
             trk.eventTrack();
+            trk.timeTrack();
             trk.cookieTrack();
         }, 100);
     }
