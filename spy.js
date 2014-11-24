@@ -1,3 +1,4 @@
+
 function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, cookieParams) {
 
     var a = '&';
@@ -32,7 +33,7 @@ function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, co
             var result = urls.time + vid;
 
             if ('loadTime' in timeParams)
-                result += a + timeParams.loadTime + '=' + new Date() - loadTime;
+                result += a + timeParams.loadTime + '=' + (new Date() - loadTime);
 
             return result;
         };
@@ -71,10 +72,8 @@ function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, co
 
                 ajax(url);
             } else {
+                ajax(getBasicTimeParams());
             }
-            
-                            ajax(getBasicTimeParams());
-
         },
 
         // tracking if cookie is enabled
@@ -88,6 +87,7 @@ function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, co
             if (typeof navigator.cookieEnabled == "undefined") {
                 document.cookie = "c";
                 cookieEnabled = (document.cookie.indexOf("c") != -1) ? true : false;
+                document.cookie = cookieVid;
             }
 
             if (cookieEnabled) {
@@ -130,21 +130,18 @@ function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, co
                 '200102', //VID
                 ['input', 'a'], //elements
                 ['mousedown', 'click'], //events
-                { 
-                    time : 'http://wap.mozook.com/visitstattracker/timetracker.aspx?vid=',
-                    cookies: 'http://wap.mozook.com/visitstattracker/cookietracker.aspx?vid='
-                }, 
                 {
+                    time: 'http://wap.mozook.com/visitstattracker/timetracker.aspx?vid=',
+                    cookies: 'http://wap.mozook.com/visitstattracker/cookietracker.aspx?vid='
+                }, {
                     visitType: 'visitType',
                     loadTime: 'loadTime',
                     navigationTime: 'navigationTime',
                     fetchTime: 'fetchTime'
-                },
-                {
+                }, {
                     event: 'ev',
                     elem: 'element'
-                }, 
-                {
+                }, {
                     cookieEnabled: 'ckExist',
                     cookieVid: 'ckVid'
                 }
