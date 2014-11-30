@@ -108,13 +108,13 @@ function Tracker(timeTrack, elementTrack, cookieTrack, extraTrack) {
 
                     url = timeTrack.url + q;
 
-                    if (timeTrack.loadTimeParam)
+                    if (typeof timeTrack.loadTimeParam !== 'undefined')
                         url += timeTrack.loadTimeParam + e + ldt + a;
 
-                    if (timeTrack.fetchTimeParam)
+                    if (typeof timeTrack.fetchTimeParam  !== 'undefined')
                         url += timeTrack.fetchTimeParam + e + ft + a;
 
-                    if (timeTrack.navigationTimeParam)
+                    if (typeof timeTrack.navigationTimeParam !== 'undefined')
                         url += timeTrack.navigationTimeParam + e + nt;
 
                     ajax(url + a + getExtraParams());
@@ -141,7 +141,7 @@ function Tracker(timeTrack, elementTrack, cookieTrack, extraTrack) {
                     cookieEnabled = (document.cookie.indexOf("c") != -1) ? true : false;
                 }
 
-                if (cookieEnabled && cookieTrack.cookieEnabledParam) {
+                if (cookieEnabled && typeof cookieTrack.cookieEnabledParam !== 'undefined') {
 
                     url = cookieTrack.url + q + cookieTrack.cookieEnabledParam + e + cookieEnabled + a;
 
