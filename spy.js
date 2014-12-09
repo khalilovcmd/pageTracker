@@ -131,8 +131,8 @@ function Tracker(loadTime, vid, elems, events, urls, timeParams, trackParams, co
                 ['input', 'a'], //elements
                 ['mousedown', 'click'], //events
                 { 
-                    time : 'http://wap.mozook.com/visitstattracker/timetracker.aspx?vid=',
-                    cookies: 'http://wap.mozook.com/visitstattracker/cookietracker.aspx?vid='
+                    time : 'http://yourdomain.com/visitstattracker/timetracker.aspx?vid=',
+                    cookies: 'http://yourdomain.com/visitstattracker/cookietracker.aspx?vid='
                 }, 
                 {
                     visitType: 'visitType',
